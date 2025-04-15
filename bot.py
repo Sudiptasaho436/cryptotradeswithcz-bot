@@ -8,7 +8,7 @@ from telegram import Update, Bot
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 import nest_asyncio
-nest_asyncio.apply()
+
 
 
 # Configuration
