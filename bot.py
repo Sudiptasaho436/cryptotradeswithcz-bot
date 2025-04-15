@@ -9,7 +9,8 @@ from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 import nest_asyncio
 
-
+# Apply nest_asyncio to avoid event loop errors in some environments
+nest_asyncio.apply()
 
 # Configuration
 TELEGRAM_BOT_TOKEN = "7600715915:AAFepyDYc0j062lK_ilcPATiSPkPzmQJSXs"
@@ -60,7 +61,6 @@ async def generate_signal(bot):
         macd_signal = last['macd_signal']
         price = last['close']
 
-        # BUY SIGNAL
         if rsi < 30 and macd > macd_signal and price < fib['0.382']:
             entry = price
             tp = round(entry + REWARD, 2)
@@ -73,12 +73,10 @@ async def generate_signal(bot):
 🎯 Take Profit: {tp}
 🛑 Stop Loss: {sl}
 📊 Risk/Reward: {rr}
-📍 Confirmed by RSI, MACD, and Fib 0.382
-"""
+📍 Confirmed by RSI, MACD, and Fib 0.382"""
             if TELEGRAM_GROUP_ID:
                 await bot.send_message(chat_id=TELEGRAM_GROUP_ID, text=message, parse_mode='Markdown')
 
-        # SELL SIGNAL
         elif rsi > 70 and macd < macd_signal and price > fib['0.618']:
             entry = price
             tp = round(entry - REWARD, 2)
@@ -91,8 +89,7 @@ async def generate_signal(bot):
 🎯 Take Profit: {tp}
 🛑 Stop Loss: {sl}
 📊 Risk/Reward: {rr}
-📍 Confirmed by RSI, MACD, and Fib 0.618
-"""
+📍 Confirmed by RSI, MACD, and Fib 0.618"""
             if TELEGRAM_GROUP_ID:
                 await bot.send_message(chat_id=TELEGRAM_GROUP_ID, text=message, parse_mode='Markdown')
 
@@ -133,18 +130,15 @@ async def main():
     application.add_handler(CommandHandler("id", get_chat_id))
 
     scheduler = AsyncIOScheduler()
-    scheduler.add_job(lambda: asyncio.create_task(generate_signal(bot)), 'interval', hours=1)
-    scheduler.add_job(lambda: asyncio.create_task(fetch_news(bot)), 'interval', hours=1)
+    scheduler.add_job(lambda: asyncio.create_task(generate_signal(application.bot)), 'interval', hours=1)
+    scheduler.add_job(lambda: asyncio.create_task(fetch_news(application.bot)), 'interval', hours=1)
     scheduler.start()
 
     print("Bot is running... (type /id in your group to get group ID)")
     await application.run_polling()
 
-import asyncio
-
 if __name__ == "__main__":
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(main())
+    asyncio.run(main())
 
 
  
