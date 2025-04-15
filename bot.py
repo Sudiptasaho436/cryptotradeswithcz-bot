@@ -4,18 +4,19 @@ import ta
 import pandas as pd
 import numpy as np
 import feedparser
+import logging
 from telegram import Update, Bot
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 import nest_asyncio
 
-# Apply nest_asyncio to avoid event loop errors in some environments
+# Apply patch to avoid event loop issues
 nest_asyncio.apply()
+logging.basicConfig(level=logging.INFO)
 
 # Configuration
 TELEGRAM_BOT_TOKEN = "7600715915:AAFepyDYc0j062lK_ilcPATiSPkPzmQJSXs"
-TELEGRAM_GROUP_ID =-1002352915880
-TELEGRAM_GROUP_ID ="@iluaicz"# Replace with your group ID
+TELEGRAM_GROUP_ID = 752461685  # Your group ID
 SYMBOL = 'BTC/USDT'
 TIMEFRAME = '1h'
 RISK = 50
@@ -75,8 +76,7 @@ async def generate_signal(bot):
 🛑 Stop Loss: {sl}
 📊 Risk/Reward: {rr}
 📍 Confirmed by RSI, MACD, and Fib 0.382"""
-            if TELEGRAM_GROUP_ID:
-                await bot.send_message(chat_id=TELEGRAM_GROUP_ID, text=message, parse_mode='Markdown')
+            await bot.send_message(chat_id=TELEGRAM_GROUP_ID, text=message, parse_mode='Markdown')
 
         elif rsi > 70 and macd < macd_signal and price > fib['0.618']:
             entry = price
@@ -91,11 +91,10 @@ async def generate_signal(bot):
 🛑 Stop Loss: {sl}
 📊 Risk/Reward: {rr}
 📍 Confirmed by RSI, MACD, and Fib 0.618"""
-            if TELEGRAM_GROUP_ID:
-                await bot.send_message(chat_id=TELEGRAM_GROUP_ID, text=message, parse_mode='Markdown')
+            await bot.send_message(chat_id=TELEGRAM_GROUP_ID, text=message, parse_mode='Markdown')
 
     except Exception as e:
-        print("Error generating signal:", e)
+        logging.error(f"Signal error: {e}")
 
 # Fetch news
 async def fetch_news(bot):
@@ -106,48 +105,41 @@ async def fetch_news(bot):
         ]
 
         headlines = []
-
         for source in sources:
             feed = feedparser.parse(source)
             for entry in feed.entries[:2]:
                 headlines.append(f"🗞 {entry.title}\n🔗 {entry.link}")
 
         news_message = "📰 *Top Crypto Headlines:*\n\n" + "\n\n".join(headlines[:4])
-
-        if TELEGRAM_GROUP_ID:
-            await bot.send_message(chat_id=TELEGRAM_GROUP_ID, text=news_message, parse_mode='Markdown')
+        await bot.send_message(chat_id=TELEGRAM_GROUP_ID, text=news_message, parse_mode='Markdown')
 
     except Exception as e:
-        print("Error fetching news:", e)
+        logging.error(f"News error: {e}")
 
 # Get chat ID
 async def get_chat_id(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
     await update.message.reply_text(f"Chat ID: {chat_id}")
-    
-    # Manual signal command
-async def manual_signal(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await generate_signal(context.bot)
-    await update.message.reply_text("📊 Manual signal check completed.")
-
-# Manual news command
-async def manual_news(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await fetch_news(context.bot)
-    await update.message.reply_text("📰 Latest crypto headlines sent.")
 
 # Help command
-async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("""Available commands:
-/id - Show chat ID
-/signal - Generate trading signal now
-/news - Fetch top crypto headlines
-/help - Show this message""")
-
+async def get_help(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    help_msg = """
+📘 Available Commands:
+/id - Get your group ID
+/signal - Trigger trade signal
+/news - Get latest crypto news
+/help - Show this help message
+"""
+    await update.message.reply_text(help_msg)
 
 # Main function
 async def main():
     application = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
+
     application.add_handler(CommandHandler("id", get_chat_id))
+    application.add_handler(CommandHandler("signal", lambda u, c: generate_signal(application.bot)))
+    application.add_handler(CommandHandler("news", lambda u, c: fetch_news(application.bot)))
+    application.add_handler(CommandHandler("help", get_help))
 
     scheduler = AsyncIOScheduler()
     scheduler.add_job(lambda: asyncio.create_task(generate_signal(application.bot)), 'interval', hours=1)
