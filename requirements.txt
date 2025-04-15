@@ -1,2 +1,9 @@
 python-telegram-bot==20.3
 requests
+ccxt==1.70.3
+talib==0.4.0
+pandas==1.5.3
+numpy==1.24.2
+python-telegram-bot==20.0
+apscheduler==3.9.1
+feedparser==6.0.10
