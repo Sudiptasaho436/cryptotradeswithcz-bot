@@ -16,7 +16,7 @@ logging.basicConfig(level=logging.INFO)
 
 # Configuration
 TELEGRAM_BOT_TOKEN = "7600715915:AAFepyDYc0j062lK_ilcPATiSPkPzmQJSXs"
-TELEGRAM_GROUP_ID = 752461685
+TELEGRAM_GROUP_ID = -1002352915880
 SYMBOL = 'BTC/USDT'
 TIMEFRAME = '1h'
 RISK = 50
@@ -147,8 +147,9 @@ async def main():
     application.add_handler(CommandHandler("news", manual_news))
 
     scheduler = AsyncIOScheduler()
-    scheduler.add_job(lambda: asyncio.create_task(generate_signal(application.bot)), 'interval', hours=1)
-    scheduler.add_job(lambda: asyncio.create_task(fetch_news(application.bot)), 'interval', hours=1)
+    scheduler.add_job(lambda: asyncio.create_task(generate_signal(application.bot)), 'interval', minutes=15)
+    scheduler.add_job(lambda: asyncio.create_task(fetch_news(application.bot)), 'interval', hours=1)  # Optional: keep news hourly
+
     scheduler.start()
 
     print("Bot is running... (type /id in your group to get group ID)")
