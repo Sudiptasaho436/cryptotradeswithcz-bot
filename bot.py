@@ -1,15 +1,21 @@
+import asyncio
 import ccxt
 import ta
 import pandas as pd
 import numpy as np
-from telegram import Bot, Update
-from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
-from apscheduler.schedulers.background import BackgroundScheduler
-import time
 import feedparser
+import logging
+from telegram import Update, Bot
+from telegram.ext import (
+    ApplicationBuilder,
+    CommandHandler,
+    ContextTypes,
+)
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+
 
 # === CONFIGURATION ===
-TELEGRAM_BOT_TOKEN = "7600715915:AAFepyDYc0j062lK_ilcPATiSPkPzmQJSXs"
+TELEGRAM_BOT_TOKEN = "YOUR_TELEGRAM_BOT_TOKEN"
 TELEGRAM_GROUP_ID = None  # Replace with your group ID after getting it from /id
 SYMBOL = 'BTC/USDT'
 TIMEFRAME = '1h'
@@ -18,6 +24,7 @@ REWARD = 100
 
 bot = Bot(token=TELEGRAM_BOT_TOKEN)
 exchange = ccxt.binance()
+
 
 # === FETCH MARKET DATA ===
 def fetch_data(symbol, timeframe='1h'):
@@ -28,8 +35,11 @@ def fetch_data(symbol, timeframe='1h'):
 
 # === CALCULATE INDICATORS ===
 def calculate_indicators(df):
-    rsi = ta.momentum.RSIIndicator(close=data['close']).rsi()
-    df['macd'], df['macd_signal'], df['macd_hist'] = talib.MACD(df['close'], fastperiod=12, slowperiod=26, signalperiod=9)
+    df['RSI'] = ta.momentum.RSIIndicator(close=df['close']).rsi()
+    macd = ta.trend.MACD(close=df['close'])
+    df['macd'] = macd.macd()
+    df['macd_signal'] = macd.macd_signal()
+    df['macd_hist'] = macd.macd_diff()
 
     high = df['high'].max()
     low = df['low'].min()
@@ -44,7 +54,7 @@ def calculate_indicators(df):
     return df, fib_levels
 
 # === GENERATE SIGNAL ===
-def generate_signal():
+async def generate_signal():
     try:
         df = fetch_data(SYMBOL, TIMEFRAME)
         df, fib = calculate_indicators(df)
@@ -71,7 +81,7 @@ def generate_signal():
 📍 Confirmed by RSI, MACD, and Fib 0.382
 """
             if TELEGRAM_GROUP_ID:
-                bot.send_message(chat_id=TELEGRAM_GROUP_ID, text=message, parse_mode='Markdown')
+                await bot.send_message(chat_id=TELEGRAM_GROUP_ID, text=message, parse_mode='Markdown')
 
         # SELL SIGNAL
         elif rsi > 70 and macd < macd_signal and price > fib['0.618']:
@@ -89,18 +99,20 @@ def generate_signal():
 📍 Confirmed by RSI, MACD, and Fib 0.618
 """
             if TELEGRAM_GROUP_ID:
-                bot.send_message(chat_id=TELEGRAM_GROUP_ID, text=message, parse_mode='Markdown')
+                await bot.send_message(chat_id=TELEGRAM_GROUP_ID, text=message, parse_mode='Markdown')
 
     except Exception as e:
         print("Error generating signal:", e)
 
+
 # === GET CHAT ID ===
-def get_chat_id(update: Update, context: CallbackContext):
-    chat_id = update.message.chat_id
-    update.message.reply_text(f"Chat ID: {chat_id}")
+async def get_chat_id(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat_id = update.effective_chat.id
+    await update.message.reply_text(f"Chat ID: {chat_id}")
+
 
 # === FETCH NEWS ===
-def fetch_news():
+async def fetch_news():
     try:
         sources = [
             "https://www.coindesk.com/arc/outboundfeeds/rss/",
@@ -117,26 +129,25 @@ def fetch_news():
         news_message = "📰 *Top Crypto Headlines:*\n\n" + "\n\n".join(headlines[:4])
         
         if TELEGRAM_GROUP_ID:
-            bot.send_message(chat_id=TELEGRAM_GROUP_ID, text=news_message, parse_mode='Markdown')
+            await bot.send_message(chat_id=TELEGRAM_GROUP_ID, text=news_message, parse_mode='Markdown')
     
     except Exception as e:
         print("Error fetching news:", e)
 
-# === START TELEGRAM HANDLER ===
-application = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
-dp.add_handler(CommandHandler("id", get_chat_id))
-updater.start_polling()
 
-# === SCHEDULE THE SIGNAL & NEWS GENERATOR ===
-scheduler = BackgroundScheduler()
-scheduler.add_job(generate_signal, 'interval', hours=1)
-scheduler.add_job(fetch_news, 'interval', hours=1)
-scheduler.start()
+# === MAIN FUNCTION ===
+async def main():
+    application = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
 
-# === KEEP RUNNING ===
-print("Bot is running... (type /id in your group to get group ID)")
-try:
-    while True:
-        time.sleep(1)
-except (KeyboardInterrupt, SystemExit):
-    scheduler.shutdown()
+    application.add_handler(CommandHandler("id", get_chat_id))
+
+    scheduler = AsyncIOScheduler()
+    scheduler.add_job(generate_signal, 'interval', hours=1)
+    scheduler.add_job(fetch_news, 'interval', hours=1)
+    scheduler.start()
+
+    print("Bot is running... (type /id in your group to get group ID)")
+    await application.run_polling()
+
+if __name__ == "__main__":
+    asyncio.run(main())
