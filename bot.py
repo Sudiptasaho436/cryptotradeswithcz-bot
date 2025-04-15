@@ -140,8 +140,12 @@ async def main():
     print("Bot is running... (type /id in your group to get group ID)")
     await application.run_polling()
 
+import asyncio
+
 if __name__ == "__main__":
-    asyncio.get_event_loop().run_until_complete(main())
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(main())
+
 
  
 
