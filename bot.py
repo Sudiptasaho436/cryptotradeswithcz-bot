@@ -124,6 +124,25 @@ async def fetch_news(bot):
 async def get_chat_id(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
     await update.message.reply_text(f"Chat ID: {chat_id}")
+    
+    # Manual signal command
+async def manual_signal(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await generate_signal(context.bot)
+    await update.message.reply_text("📊 Manual signal check completed.")
+
+# Manual news command
+async def manual_news(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await fetch_news(context.bot)
+    await update.message.reply_text("📰 Latest crypto headlines sent.")
+
+# Help command
+async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("""Available commands:
+/id - Show chat ID
+/signal - Generate trading signal now
+/news - Fetch top crypto headlines
+/help - Show this message""")
+
 
 # Main function
 async def main():
