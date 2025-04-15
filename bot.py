@@ -16,7 +16,7 @@ logging.basicConfig(level=logging.INFO)
 
 # Configuration
 TELEGRAM_BOT_TOKEN = "7600715915:AAFepyDYc0j062lK_ilcPATiSPkPzmQJSXs"
-TELEGRAM_GROUP_ID = 752461685  # Your group ID
+TELEGRAM_GROUP_ID = 752461685
 SYMBOL = 'BTC/USDT'
 TIMEFRAME = '1h'
 RISK = 50
@@ -52,7 +52,7 @@ def calculate_indicators(df):
     return df, fib_levels
 
 # Generate signal
-async def generate_signal(bot):
+async def generate_signal(bot: Bot):
     try:
         df = fetch_data(SYMBOL, TIMEFRAME)
         df, fib = calculate_indicators(df)
@@ -97,31 +97,28 @@ async def generate_signal(bot):
         logging.error(f"Signal error: {e}")
 
 # Fetch news
-async def fetch_news(bot):
+async def fetch_news(bot: Bot):
     try:
         sources = [
             "https://www.coindesk.com/arc/outboundfeeds/rss/",
             "https://cointelegraph.com/rss"
         ]
-
         headlines = []
         for source in sources:
             feed = feedparser.parse(source)
             for entry in feed.entries[:2]:
                 headlines.append(f"🗞 {entry.title}\n🔗 {entry.link}")
-
         news_message = "📰 *Top Crypto Headlines:*\n\n" + "\n\n".join(headlines[:4])
         await bot.send_message(chat_id=TELEGRAM_GROUP_ID, text=news_message, parse_mode='Markdown')
 
     except Exception as e:
         logging.error(f"News error: {e}")
 
-# Get chat ID
+# Command Handlers
 async def get_chat_id(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
     await update.message.reply_text(f"Chat ID: {chat_id}")
 
-# Help command
 async def get_help(update: Update, context: ContextTypes.DEFAULT_TYPE):
     help_msg = """
 📘 Available Commands:
@@ -131,40 +128,23 @@ async def get_help(update: Update, context: ContextTypes.DEFAULT_TYPE):
 /help - Show this help message
 """
     await update.message.reply_text(help_msg)
-    # Handle /signal command manually
+
 async def manual_signal(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Generating signal...")
     await generate_signal(context.bot)
 
-# Handle /news command manually
 async def manual_news(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Fetching latest crypto news...")
     await fetch_news(context.bot)
-
-# Handle /help command
-async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    help_text = """
-📌 *Available Commands*:
-/id - Get chat ID
-/signal - Get current trading signal
-/news - Get latest crypto news
-/help - Show this message
-"""
-    await update.message.reply_text(help_text, parse_mode='Markdown')
-
 
 # Main function
 async def main():
     application = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
 
     application.add_handler(CommandHandler("id", get_chat_id))
-    application.add_handler(CommandHandler("signal", lambda u, c: generate_signal(application.bot)))
-    application.add_handler(CommandHandler("news", lambda u, c: fetch_news(application.bot)))
     application.add_handler(CommandHandler("help", get_help))
     application.add_handler(CommandHandler("signal", manual_signal))
     application.add_handler(CommandHandler("news", manual_news))
-    application.add_handler(CommandHandler("help", help_command))
-
 
     scheduler = AsyncIOScheduler()
     scheduler.add_job(lambda: asyncio.create_task(generate_signal(application.bot)), 'interval', hours=1)
@@ -176,6 +156,7 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+
 
 
  
