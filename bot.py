@@ -126,8 +126,8 @@ async def get_chat_id(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # Main function
 async def main():
-    application = ApplicationBuilder().token(TELEGRAM_B
-::contentReference[oaicite:7]{index=7}
+   application = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
+
  
 
 
