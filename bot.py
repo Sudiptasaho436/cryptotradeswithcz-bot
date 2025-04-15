@@ -14,7 +14,8 @@ nest_asyncio.apply()
 
 # Configuration
 TELEGRAM_BOT_TOKEN = "7600715915:AAFepyDYc0j062lK_ilcPATiSPkPzmQJSXs"
-TELEGRAM_GROUP_ID =-1002352915880  # Replace with your group ID
+TELEGRAM_GROUP_ID =-1002352915880
+TELEGRAM_GROUP_ID ="@iluaicz"# Replace with your group ID
 SYMBOL = 'BTC/USDT'
 TIMEFRAME = '1h'
 RISK = 50
