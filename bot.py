@@ -1,4 +1,3 @@
-import asyncio
 import ccxt
 import ta
 import pandas as pd
@@ -13,9 +12,8 @@ from telegram.ext import (
 )
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
-
 # === CONFIGURATION ===
-TELEGRAM_BOT_TOKEN = "7600715915:AAFepyDYc0j062lK_ilcPATiSPkPzmQJSXs"
+TELEGRAM_BOT_TOKEN = "YOUR_TELEGRAM_BOT_TOKEN"
 TELEGRAM_GROUP_ID = None  # Replace with your group ID after getting it from /id
 SYMBOL = 'BTC/USDT'
 TIMEFRAME = '1h'
@@ -24,7 +22,6 @@ REWARD = 100
 
 bot = Bot(token=TELEGRAM_BOT_TOKEN)
 exchange = ccxt.binance()
-
 
 # === FETCH MARKET DATA ===
 def fetch_data(symbol, timeframe='1h'):
@@ -104,12 +101,10 @@ async def generate_signal():
     except Exception as e:
         print("Error generating signal:", e)
 
-
 # === GET CHAT ID ===
 async def get_chat_id(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
     await update.message.reply_text(f"Chat ID: {chat_id}")
-
 
 # === FETCH NEWS ===
 async def fetch_news():
@@ -134,9 +129,8 @@ async def fetch_news():
     except Exception as e:
         print("Error fetching news:", e)
 
-
 # === MAIN FUNCTION ===
-async def main():
+def main():
     application = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
 
     application.add_handler(CommandHandler("id", get_chat_id))
@@ -147,7 +141,13 @@ async def main():
     scheduler.start()
 
     print("Bot is running... (type /id in your group to get group ID)")
-    await application.run_polling()
+    application.run_polling()
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
+
+
+
+    
+        
+    
