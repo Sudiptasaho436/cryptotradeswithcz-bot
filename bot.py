@@ -131,6 +131,27 @@ async def get_help(update: Update, context: ContextTypes.DEFAULT_TYPE):
 /help - Show this help message
 """
     await update.message.reply_text(help_msg)
+    # Handle /signal command manually
+async def manual_signal(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Generating signal...")
+    await generate_signal(context.bot)
+
+# Handle /news command manually
+async def manual_news(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Fetching latest crypto news...")
+    await fetch_news(context.bot)
+
+# Handle /help command
+async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    help_text = """
+📌 *Available Commands*:
+/id - Get chat ID
+/signal - Get current trading signal
+/news - Get latest crypto news
+/help - Show this message
+"""
+    await update.message.reply_text(help_text, parse_mode='Markdown')
+
 
 # Main function
 async def main():
@@ -140,6 +161,10 @@ async def main():
     application.add_handler(CommandHandler("signal", lambda u, c: generate_signal(application.bot)))
     application.add_handler(CommandHandler("news", lambda u, c: fetch_news(application.bot)))
     application.add_handler(CommandHandler("help", get_help))
+    application.add_handler(CommandHandler("signal", manual_signal))
+    application.add_handler(CommandHandler("news", manual_news))
+    application.add_handler(CommandHandler("help", help_command))
+
 
     scheduler = AsyncIOScheduler()
     scheduler.add_job(lambda: asyncio.create_task(generate_signal(application.bot)), 'interval', hours=1)
