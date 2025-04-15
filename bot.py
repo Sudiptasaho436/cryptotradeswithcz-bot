@@ -15,7 +15,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 
 # === CONFIGURATION ===
-TELEGRAM_BOT_TOKEN = "YOUR_TELEGRAM_BOT_TOKEN"
+TELEGRAM_BOT_TOKEN = "7600715915:AAFepyDYc0j062lK_ilcPATiSPkPzmQJSXs"
 TELEGRAM_GROUP_ID = None  # Replace with your group ID after getting it from /id
 SYMBOL = 'BTC/USDT'
 TIMEFRAME = '1h'
