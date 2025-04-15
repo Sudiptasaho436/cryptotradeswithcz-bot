@@ -130,20 +130,18 @@ async def get_chat_id(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # Main function
 async def main():
     application = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
-
     application.add_handler(CommandHandler("id", get_chat_id))
 
     scheduler = AsyncIOScheduler()
-    scheduler.add_job(generate_signal, 'interval', hours=1, args=[application.bot])
-    scheduler.add_job(fetch_news, 'interval', hours=1, args=[application.bot])
+    scheduler.add_job(lambda: asyncio.create_task(generate_signal(bot)), 'interval', hours=1)
+    scheduler.add_job(lambda: asyncio.create_task(fetch_news(bot)), 'interval', hours=1)
     scheduler.start()
 
     print("Bot is running... (type /id in your group to get group ID)")
     await application.run_polling()
 
 if __name__ == "__main__":
-    asyncio.run(main())
-
+    asyncio.get_event_loop().run_until_complete(main())
 
  
 
