@@ -3,7 +3,7 @@ import ta
 import pandas as pd
 import numpy as np
 from telegram import Bot, Update
-from telegram.ext import CommandHandler, Updater, CallbackContext
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 from apscheduler.schedulers.background import BackgroundScheduler
 import time
 import feedparser
