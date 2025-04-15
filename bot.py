@@ -123,8 +123,7 @@ def fetch_news():
         print("Error fetching news:", e)
 
 # === START TELEGRAM HANDLER ===
-updater = Updater(token=TELEGRAM_BOT_TOKEN)
-dp = updater.dispatcher
+application = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
 dp.add_handler(CommandHandler("id", get_chat_id))
 updater.start_polling()
 
