@@ -1,9 +1,9 @@
+import asyncio
 import ccxt
 import ta
 import pandas as pd
 import numpy as np
 import feedparser
-import logging
 from telegram import Update, Bot
 from telegram.ext import (
     ApplicationBuilder,
@@ -130,7 +130,7 @@ async def fetch_news():
         print("Error fetching news:", e)
 
 # === MAIN FUNCTION ===
-def main():
+async def main():
     application = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
 
     application.add_handler(CommandHandler("id", get_chat_id))
@@ -141,10 +141,11 @@ def main():
     scheduler.start()
 
     print("Bot is running... (type /id in your group to get group ID)")
-    application.run_polling()
+    await application.run_polling()
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
+
 
 
 
