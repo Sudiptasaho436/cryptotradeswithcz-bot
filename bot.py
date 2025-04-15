@@ -1,5 +1,5 @@
 import ccxt
-import talib
+import ta
 import pandas as pd
 import numpy as np
 from telegram import Bot, Update
@@ -28,7 +28,7 @@ def fetch_data(symbol, timeframe='1h'):
 
 # === CALCULATE INDICATORS ===
 def calculate_indicators(df):
-    df['RSI'] = talib.RSI(df['close'], timeperiod=14)
+    rsi = ta.momentum.RSIIndicator(close=data['close']).rsi()
     df['macd'], df['macd_signal'], df['macd_hist'] = talib.MACD(df['close'], fastperiod=12, slowperiod=26, signalperiod=9)
 
     high = df['high'].max()
