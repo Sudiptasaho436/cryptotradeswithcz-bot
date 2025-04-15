@@ -1,4 +1,4 @@
-python-telegram-bot==20.3
+python-telegram-bot==13.14
 requests
 ccxt==1.70.3
 talib==0.4.0
