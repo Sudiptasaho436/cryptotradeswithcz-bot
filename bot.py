@@ -5,32 +5,27 @@ import pandas as pd
 import numpy as np
 import feedparser
 from telegram import Update, Bot
-from telegram.ext import (
-    ApplicationBuilder,
-    CommandHandler,
-    ContextTypes,
-)
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
-# === CONFIGURATION ===
+# Configuration
 TELEGRAM_BOT_TOKEN = "7600715915:AAFepyDYc0j062lK_ilcPATiSPkPzmQJSXs"
-TELEGRAM_GROUP_ID = None  # Replace with your group ID after getting it from /id
+TELEGRAM_GROUP_ID = None  # Replace with your group ID
 SYMBOL = 'BTC/USDT'
 TIMEFRAME = '1h'
 RISK = 50
 REWARD = 100
 
-bot = Bot(token=TELEGRAM_BOT_TOKEN)
 exchange = ccxt.binance()
 
-# === FETCH MARKET DATA ===
+# Fetch market data
 def fetch_data(symbol, timeframe='1h'):
     bars = exchange.fetch_ohlcv(symbol, timeframe)
     df = pd.DataFrame(bars, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
     df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms')
     return df
 
-# === CALCULATE INDICATORS ===
+# Calculate indicators
 def calculate_indicators(df):
     df['RSI'] = ta.momentum.RSIIndicator(close=df['close']).rsi()
     macd = ta.trend.MACD(close=df['close'])
@@ -50,8 +45,8 @@ def calculate_indicators(df):
     }
     return df, fib_levels
 
-# === GENERATE SIGNAL ===
-async def generate_signal():
+# Generate signal
+async def generate_signal(bot):
     try:
         df = fetch_data(SYMBOL, TIMEFRAME)
         df, fib = calculate_indicators(df)
@@ -101,13 +96,8 @@ async def generate_signal():
     except Exception as e:
         print("Error generating signal:", e)
 
-# === GET CHAT ID ===
-async def get_chat_id(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chat_id = update.effective_chat.id
-    await update.message.reply_text(f"Chat ID: {chat_id}")
-
-# === FETCH NEWS ===
-async def fetch_news():
+# Fetch news
+async def fetch_news(bot):
     try:
         sources = [
             "https://www.coindesk.com/arc/outboundfeeds/rss/",
@@ -122,29 +112,23 @@ async def fetch_news():
                 headlines.append(f"🗞 {entry.title}\n🔗 {entry.link}")
 
         news_message = "📰 *Top Crypto Headlines:*\n\n" + "\n\n".join(headlines[:4])
-        
+
         if TELEGRAM_GROUP_ID:
             await bot.send_message(chat_id=TELEGRAM_GROUP_ID, text=news_message, parse_mode='Markdown')
-    
+
     except Exception as e:
         print("Error fetching news:", e)
 
-# === MAIN FUNCTION ===
+# Get chat ID
+async def get_chat_id(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat_id = update.effective_chat.id
+    await update.message.reply_text(f"Chat ID: {chat_id}")
+
+# Main function
 async def main():
-    application = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
-
-    application.add_handler(CommandHandler("id", get_chat_id))
-
-    scheduler = AsyncIOScheduler()
-    scheduler.add_job(generate_signal, 'interval', hours=1)
-    scheduler.add_job(fetch_news, 'interval', hours=1)
-    scheduler.start()
-
-    print("Bot is running... (type /id in your group to get group ID)")
-    await application.run_polling()
-
-if __name__ == "__main__":
-    asyncio.run(main())
+    application = ApplicationBuilder().token(TELEGRAM_B
+::contentReference[oaicite:7]{index=7}
+ 
 
 
 
