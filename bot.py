@@ -50,51 +50,49 @@ def calculate_indicators(df):
         '1.0': high
     }
     return df, fib_levels
-
 # Generate signal
-async def generate_signal(bot: Bot):
+async def generate_signal(bot):
     try:
         df = fetch_data(SYMBOL, TIMEFRAME)
         df, fib = calculate_indicators(df)
-
         last = df.iloc[-1]
+
         rsi = last['RSI']
         macd = last['macd']
         macd_signal = last['macd_signal']
         price = last['close']
+        ema50 = last['ema50']
+        ema200 = last['ema200']
+        adx = last['adx']
 
-        if rsi < 30 and macd > macd_signal and price < fib['0.382']:
-            entry = price
-            tp = round(entry + REWARD, 2)
-            sl = round(entry - RISK, 2)
-            rr = round(REWARD / RISK, 2)
-            message = f"""🚀 *Buy Signal Detected!*
+        # Confirm trend direction and strength with EMA & ADX
+        trend_up = ema50 > ema200
+        trend_down = ema50 < ema200
+        strong_trend = adx > 20
+
+        if trend_up and rsi < 30 and macd > macd_signal and price < fib['0.382'] and strong_trend:
+            await send_trade_signal(bot, 'Buy', price)
+
+        elif trend_down and rsi > 70 and macd < macd_signal and price > fib['0.618'] and strong_trend:
+            await send_trade_signal(bot, 'Sell', price)
+
+    except Exception as e:
+        logging.error(f"Signal error: {e}")
+
+async def send_trade_signal(bot, direction, entry):
+    tp = round(entry + REWARD, 2) if direction == 'Buy' else round(entry - REWARD, 2)
+    sl = round(entry - RISK, 2) if direction == 'Buy' else round(entry + RISK, 2)
+    rr = round(REWARD / RISK, 2)
+    emoji = '🚀' if direction == 'Buy' else '🔻'
+    message = f"""{emoji} *{direction} Signal Detected!*
 
 📈 Pair: {SYMBOL}
 💵 Entry: {entry}
 🎯 Take Profit: {tp}
 🛑 Stop Loss: {sl}
 📊 Risk/Reward: {rr}
-📍 Confirmed by RSI, MACD, and Fib 0.382"""
-            await bot.send_message(chat_id=TELEGRAM_GROUP_ID, text=message, parse_mode='Markdown')
-
-        elif rsi > 70 and macd < macd_signal and price > fib['0.618']:
-            entry = price
-            tp = round(entry - REWARD, 2)
-            sl = round(entry + RISK, 2)
-            rr = round(REWARD / RISK, 2)
-            message = f"""🔻 *Sell Signal Detected!*
-
-📉 Pair: {SYMBOL}
-💵 Entry: {entry}
-🎯 Take Profit: {tp}
-🛑 Stop Loss: {sl}
-📊 Risk/Reward: {rr}
-📍 Confirmed by RSI, MACD, and Fib 0.618"""
-            await bot.send_message(chat_id=TELEGRAM_GROUP_ID, text=message, parse_mode='Markdown')
-
-    except Exception as e:
-        logging.error(f"Signal error: {e}")
+📍 Confirmed by RSI, MACD, EMA, ADX, and Fib level"""
+    await bot.send_message(chat_id=TELEGRAM_GROUP_ID, text=message, parse_mode='Markdown')
 
 # Fetch news
 async def fetch_news(bot: Bot):
